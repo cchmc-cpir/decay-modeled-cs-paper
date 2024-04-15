@@ -571,7 +571,3 @@ ax.text(0.5, 0.9, text_label,
         horizontalalignment='center',
         verticalalignment='center',
         size=24)
-
-# ax.plot(lineprof(norm_img(img_cs_pi)), 'gold', linewidth=1,
-#         label=r'$\underset{x}{\operatorname{\min}}||RFx-y||^2_2 + g(x)$')
-# ax.plot(lineprof(norm_img(img_nufft)), 'b', linewidth=1, label=r'$(DF)^H(y)$')
