@@ -52,7 +52,9 @@ subsample_pc = 100  # percentage
 
 # Regularization
 lamda_l2 = 1e-5
-num_iters = 200
+lamda_1 = 1e-8
+lamda_2 = 1e-8
+num_iters = 50
 
 # %% Import MRI k-space data/coordinates
 
@@ -116,7 +118,7 @@ plt.show()
 # %% Reconstruction settings
 
 # Image reconstruction sizes
-recon_resolution = 240
+recon_resolution = 120
 scan_resolution = 120
 
 # Make manipulations to reconstructed volume
@@ -282,7 +284,7 @@ A *= np.sqrt(1/LL)
 
 # Solve ||Ax - b||^2 + lamda||x||^2 using conjugate gradient descent
 img_cg = abs(mvc(convexalg.cg(num_iters=50,
-                              ptol=0,
+                              ptol=1e-5,
                               A=A, b=b,
                               lamda=lamda_l2,  # l2-norm constraint for additional regularization
                               verbose=True,
@@ -316,7 +318,7 @@ A *= np.sqrt(1/LL)
 
 # Solve ||Ax - b||^2 + lamda||x||^2 using conjugate gradient descent
 img_cg_normalized = abs(mvc(convexalg.cg(num_iters=50,
-                                         ptol=0,
+                                         ptol=1e-5,
                                          A=A, b=b,
                                          lamda=lamda_l2,  # l2-norm constraint for additional regularization
                                          verbose=True,
@@ -346,7 +348,7 @@ LL = sp.app.MaxEig(A.N, dtype=xp.complex64,
 A *= np.sqrt(1/LL)
 
 # Solve ||Ax - b||^2 + lamda||x||^2 using conjugate gradient descent
-img_cg_model = abs(mvc(convexalg.cg(num_iters=200,
+img_cg_model = abs(mvc(convexalg.cg(num_iters=50,
                                     ptol=1e-5,
                                     A=A, b=b,
                                     lamda=lamda_l2,  # l2-norm constraint for additional regularization
@@ -356,39 +358,43 @@ img_cg_model = abs(mvc(convexalg.cg(num_iters=200,
 
 pl.ImagePlot(np.rot90(img_cg_model[:, :, int(recon_resolution/3):int(recon_resolution/1.5):2], 2),
              x=0, y=1, z=2,
-             title="$||RFx-y||^2_2$")
-
-# %% Solve ||Ax - b||^2 using gradient method (with Nesterov's acceleration)
+             title=r"$||RFx-y||^2_2$")
 
 
-def gradf(x): return A.H * (A * x - b)
+# Define regularizing linear operators
+W1 = sp.linop.Wavelet(S.ishape, wave_name="db4")
+def g1(x): return lamda_1 * xp.linalg.norm(W1(x).ravel(), ord=1)
 
 
-x = mvd(np.zeros(image_shape, dtype=complex))
-tolerance = []
-prox_l2 = sp.prox.L2Reg(x.shape, lamda_l2)
-alg = sp.alg.GradientMethod(
-    gradf, x, alpha=0.5, proxg=prox_l2, accelerate=True, max_iter=num_iters, tol=1e-5)
-pbar = tqdm(total=num_iters, desc="GM", leave=True)
-while not alg.done():
-    x_old = x.copy()
-    alg.update()
-    calc_tol = convexalg.calc_perc_err(x_old, x, ord=1)
-    tolerance.append(calc_tol)
-    pbar.set_postfix(ptol="%0.2f%%" % calc_tol)
-    pbar.update()
-    pbar.refresh()
-pbar.close()
-img_gm = mvc(abs(x))
+prox_g1 = sp.prox.UnitaryTransform(
+    sp.prox.L1Reg(W1.oshape, lamda_1), W1)
 
-pl.ImagePlot(np.rot90(img_gm[:, :, int(recon_resolution/3):int(recon_resolution/1.5):2], 2),
+prox_g2 = tv.ProxTV(S.ishape, lamda_2)
+def g2(x): return lamda_2 * xp.linalg.norm(prox_g2.G(x))
+
+
+lst_g = [g1, g2]
+lst_proxg = [prox_g1, prox_g2]
+
+# Solve ||Ax - b||^2 + lamda_1 |Wx| + lamda_2 |Gx| using ADMM
+img_cs_cg = mvc(abs(convexalg.admm(num_iters=num_iters,
+                                   ptol=1e-5,
+                                   A=A, b=b,
+                                   num_normal=15,
+                                   lst_proxg=lst_proxg,
+                                   rho=5e2,
+                                   lst_g=lst_g,
+                                   method="cg",
+                                   verbose=True,
+                                   draw_output=True)))
+pl.ImagePlot(np.rot90(img_cs_cg[:, :, int(recon_resolution/3):int(recon_resolution/1.5):2], 2),
              x=0, y=1, z=2,
-             title="Reconstruction using GM")
+             title=r"$||RFx-y||^2_2 + g(x)$")
+
 
 # %% Show the plots
 
 plot_slice = image_size//2
-plot_slice = 105
 
 plt.figure()
 plt.imshow(np.rot90(img_nufft[1:image_size-1,
@@ -413,82 +419,11 @@ plt.axis('off')
 
 plt.figure()
 plt.imshow(
-    np.rot90(img_gm[1:image_size-1, 1:image_size-1, plot_slice], 3), cmap="gray")
+    np.rot90(img_cs_cg[1:image_size-1, 1:image_size-1, plot_slice], 3), cmap="gray")
 plt.colorbar()
 plt.title('Reconstruction using GM iterative NUFFT \n (model decay)')
 plt.axis('off')
 
-# %% Export files as .nii.gz
-
-
-# Check whether a specified save data path exists
-results_exist = os.path.exists("results")
-
-# Create a new directory because the results path does not exist
-if not results_exist:
-    os.makedirs("results")
-    print("A new directory called 'results' has been created.")
-
-# Build an array using matrix multiplication
-scaling_affine = np.array([[1, 0, 0, 0],
-                           [0, 1, 0, 0],
-                           [0, 0, 1, 0],
-                           [0, 0, 0, 1]])
-
-# Rotate gamma radians about axis i
-cos_gamma = np.cos(0)
-sin_gamma = np.sin(0)
-rotation_affine_1 = np.array([[1, 0, 0, 0],
-                              [0, cos_gamma, -sin_gamma,  0],
-                              [0, sin_gamma, cos_gamma, 0],
-                              [0, 0, 0, 1]])
-cos_gamma = np.cos(np.pi)
-sin_gamma = np.sin(np.pi)
-rotation_affine_2 = np.array([[cos_gamma, 0, sin_gamma, 0],
-                              [0, 1, 0, 0],
-                              [-sin_gamma, 0, cos_gamma, 0],
-                              [0, 0, 0, 1]])
-cos_gamma = np.cos(0)
-sin_gamma = np.sin(0)
-rotation_affine_3 = np.array([[cos_gamma, -sin_gamma, 0, 0],
-                              [sin_gamma, cos_gamma, 0, 0],
-                              [0, 0, 1, 0],
-                              [0, 0, 0, 1]])
-rotation_affine = rotation_affine_1.dot(
-    rotation_affine_2.dot(rotation_affine_3))
-
-# Apply translation
-translation_affine = np.array([[1, 0, 0, 0],
-                               [0, 1, 0, 0],
-                               [0, 0, 1, 0],
-                               [0, 0, 0, 1]])
-
-# Multiply matrices together
-aff = translation_affine.dot(rotation_affine.dot(scaling_affine))
-
-ni_img = nib.Nifti1Image(abs(img_nufft), affine=aff)
-nib.save(ni_img, 'results/img_nufft_' +
-         str(subsample_pc) + '.nii.gz')
-
-ni_img = nib.Nifti1Image(abs(img_nufft_norm), affine=aff)
-nib.save(ni_img, 'results/img_nufft_normalized_' +
-         str(subsample_pc) + '.nii.gz')
-
-ni_img = nib.Nifti1Image(abs(img_cg), affine=aff)
-nib.save(ni_img, 'results/img_cg_' +
-         str(subsample_pc) + '.nii.gz')
-
-ni_img = nib.Nifti1Image(abs(img_cg_normalized), affine=aff)
-nib.save(ni_img, 'results/img_cg_normalized_' +
-         str(subsample_pc) + '.nii.gz')
-
-ni_img = nib.Nifti1Image(abs(img_cg_model), affine=aff)
-nib.save(ni_img, 'results/img_cg_model_' +
-         str(subsample_pc) + '.nii.gz')
-
-ni_img = nib.Nifti1Image(abs(img_gm), affine=aff)
-nib.save(ni_img, 'results/img_gm_model_' +
-         str(subsample_pc) + '.nii.gz')
 
 # %% Try a signal mask using K means
 
@@ -541,8 +476,9 @@ img_noise = np.uint8([img_signal != 1])[0, ...]
 kernel = np.ones((7, 7), np.uint8)
 img_noise = cv2.erode(img_noise, kernel, iterations=2)
 
-# Dilate the signal image (optional)
+# Dilate/erode the signal image (optional)
 kernel = np.ones((3, 3), np.uint8)
+img_signal = cv2.erode(img_signal, kernel, iterations=1)
 img_signal = cv2.dilate(img_signal, kernel, iterations=1)
 
 plt.figure()
@@ -628,7 +564,7 @@ vmax_snr = np.percentile([util.calculate_snr(img_nufft, img_nufft[img_noise[...,
 
 # Set up subplot
 plt.figure()
-fig, axes = plt.subplots(nrows=5, ncols=3, figsize=(9, 15), dpi=100)
+fig, axes = plt.subplots(nrows=6, ncols=3, figsize=(9, 18), dpi=100)
 
 img = img_nufft[..., plot_slice]
 ax = axes[0, 0]
@@ -736,6 +672,30 @@ ax.set_title('snr, mean = %0.2f' % np.mean(
 fig.colorbar(snr, ax=ax)
 ax.axis('off')
 ax = axes[4, 2]
+img_grad_slice = G.N * img
+img_grad_slice = cv2.normalize(
+    img_grad_slice, None, 0, 1.0, cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+grad = ax.imshow(np.rot90(gradient_img(img), 3),
+                 cmap="gnuplot", vmin=0, vmax=1.5)
+ax.set_title('grad, l2-norm = %0.2f' % np.linalg.norm(img_grad_slice))
+fig.colorbar(grad, ax=ax)
+ax.axis('off')
+
+
+img = img_cs_cg[..., plot_slice]
+ax = axes[5, 0]
+im = ax.imshow(np.rot90(img, 3), cmap="gray")
+ax.set_title(r'$||RFx-y||^2_2 + g(x)$')
+fig.colorbar(im, ax=ax)
+ax.axis('off')
+ax = axes[5, 1]
+snr = ax.imshow(np.rot90(util.calculate_snr(
+    img, img[img_noise == 1]), 3), cmap="jet", vmax=vmax_snr)
+ax.set_title('snr, mean = %0.2f' % np.mean(
+    util.calculate_snr(img, img[img_noise == 1])[img_noise != 1]))
+fig.colorbar(snr, ax=ax)
+ax.axis('off')
+ax = axes[5, 2]
 img_grad_slice = G.N * img
 img_grad_slice = cv2.normalize(
     img_grad_slice, None, 0, 1.0, cv2.NORM_MINMAX, dtype=cv2.CV_32F)
