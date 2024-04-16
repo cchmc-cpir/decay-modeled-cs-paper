@@ -26,7 +26,11 @@ Run the following commands in sequence to run the experiments.
 
 ## Running the scripts: 
 
-I personally run all scripts using the `Run Current File in Interactive Window' tool in VScode.
+It is recommended to run all scripts using the `Run Current File in Interactive Window' tool in VScode so that all plots can be viewed with ease. However, the scripts also work in command line. 
+1. simulation_recon_2d.py
+2. ventilation_recon_2d.py
+3. ventilation_recon_3d.py
+4. gasex_recon_3d.py
 
 ## Uninstall:
 
