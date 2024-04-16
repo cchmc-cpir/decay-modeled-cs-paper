@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Title: 
-    signal_model_2d_ventilation.py
+    ventilation_recon_2d.py
 
 Agenda: 
     A .py script that uses compressed sensing methods to reconstruct 
