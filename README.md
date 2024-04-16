@@ -22,7 +22,7 @@ Run the following commands in sequence to run the experiments.
    - `nccl`
    - `cupy`
 2. Additionally, if not using an NVIDIA GPU, please set `devnum = -1` for each
-   of reconstruction scripts.
+   reconstruction script.
 
 ## Running the scripts: 
 
