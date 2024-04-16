@@ -26,7 +26,7 @@ Run the following commands in sequence to run the experiments.
 
 ## Running the scripts: 
 
-It is recommended to run all scripts using the `Run Current File in Interactive Window' tool in VScode so that all plots can be viewed with ease. However, the scripts also work in command line. 
+It is recommended to run all scripts using the `Run Current File in Interactive Window' tool in VScode so that a reconstructions can be monitored and debugged if necessary. However, the scripts also work in command line. 
 1. simulation_recon_2d.py
 2. ventilation_recon_2d.py
 3. ventilation_recon_3d.py
