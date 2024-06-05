@@ -482,6 +482,10 @@ plt.imshow(img_cs_pi, cmap="gray")
 plt.colorbar()
 plt.title('Reconstruction using CS: ADMM w/ PI')
 plt.axis('off')
+# TODO: the above method uses some advanced preconditioning to solve ||Ax-b||^2 faster. 
+# It makes negligible difference to this script, but its worth borrowing the code for high res/high channel-number 3D applications. 
+# If interested in optimizing, you need to adjust rho, num_iters, num_normal.
+# Read more about this here: https://doi.org/10.1137/22M1530355
 
 # %% Normalize image
 
