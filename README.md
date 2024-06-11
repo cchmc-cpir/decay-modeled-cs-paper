@@ -19,20 +19,20 @@ In a Linux, WSL2, or Mac terminal, run the following commands in sequence to ins
 **Troubleshooting**:
 
 1. This repository was tested on an NVIDIA GPU. If running on a system without
-   the same, please remove the following packages from `environment.yaml`:
+   an NVIDIA GPU, please remove (comment out with `#` key) the following packages from `environment.yaml`:
    - `cudnn`
    - `nccl`
    - `cupy`
 2. Additionally, if not using an NVIDIA GPU, please set `devnum = -1` for each
-   reconstruction script.
+   reconstruction script. Otherwise, you will encounter a bug with `cupy`.
 
 ## Running the scripts: 
 
 It is recommended to run all scripts using the `Run Current File in Interactive Window' tool in VScode so that a reconstructions can be monitored and figures can be easily viewed. However, the scripts also work in command line. 
-1. simulation_recon_2d.py
-2. ventilation_recon_2d.py
-3. ventilation_recon_3d.py
-4. gasex_recon_3d.py
+1. `simulation_recon_2d.py`
+2. `ventilation_recon_2d.py`
+3. `ventilation_recon_3d.py`
+4. `gasex_recon_3d.py`
 
 ## Optimizations:
 
@@ -41,7 +41,7 @@ Iterative reconstructions have many knobs that can be turned to speed up and imp
 1. `lamda` --> the regularization parameter for each regularization function.
 2. `num_normal` --> the number of $A^H A$ operations (i.e. the number of iterations to solve the inner $||Ax-y||^2_2$ loop).
 3. `num_iters` --> number of outer iterations in ADMM algorithm.
-4. `rho` -- ADMM step size (sometimes, this can be increased to speed up convergence, although this directly multiplies `lamda`)
+4. `rho` --> ADMM step size (sometimes, this can be increased to speed up convergence, although this directly multiplies `lamda`)
 5. `scan_resolution`/`recon_resolution` --> tune for your own application. `resolution` = matrix size (Philips terminology--please don't hate!)
 
 If you want to talk about the algorithms, ADMM, other optimization theory, or simply want help with getting the code running for your application, please post on the Issues tab.
