@@ -1,9 +1,9 @@
 # decay-modeled-cs-paper
 ![Figure1](Fig1.png)
 
-A repository that contains non-Cartesian reconstruction software for hyperpolarized xenon MRI. Written by Joseph Plummer (joeyplummer1@gmail.com, GitHub username: joeyplum). 
+A repository that contains non-Cartesian reconstruction software for hyperpolarized xenon MRI. Written by Joseph Plummer (`joseph.plummer@nih.gov`, GitHub username: `joeyplum`). 
 
-Please post all issues, questions, or collaboration requests on the Issues tab. Alternatively, feel free to contact me directly via email or other means. 
+Please post all issues, questions, or collaboration requests on the Issues tab. Alternatively, feel free to contact me directly via email. 
 
 ## Installation:
 
