@@ -7,12 +7,14 @@ Please post all issues, questions, or collaboration requests on the Issues tab. 
 
 ## Installation:
 
-Run the following commands in sequence to run the experiments.
+In a Linux, WSL2, or Mac terminal, run the following commands in sequence to install (it is recommended to set up `ssh` keys (see GitHub help or ask ChatGPT)).
 
-1. `conda update -n base -c defaults conda`
-2. `make conda`
-3. `conda activate decay-modeled-cs-paper`
-4. `make pip`
+1. `git clone git@github.com:cchmc-cpir/decay-modeled-cs-paper.git`
+2. `cd decay-modeled-cs-paper`
+3. `conda update -n base -c defaults conda`
+4. `make conda`
+5. `conda activate decay-modeled-cs-paper`
+6. `make pip`
 
 **Troubleshooting**:
 
@@ -26,7 +28,7 @@ Run the following commands in sequence to run the experiments.
 
 ## Running the scripts: 
 
-It is recommended to run all scripts using the `Run Current File in Interactive Window' tool in VScode so that a reconstructions can be monitored and debugged if necessary. However, the scripts also work in command line. 
+It is recommended to run all scripts using the `Run Current File in Interactive Window' tool in VScode so that a reconstructions can be monitored and figures can be easily viewed. However, the scripts also work in command line. 
 1. simulation_recon_2d.py
 2. ventilation_recon_2d.py
 3. ventilation_recon_3d.py
@@ -41,4 +43,4 @@ To uninstall, run the following commands:
 
 
 ## DOI:
-TBC
+https://doi.org/10.1002/mrm.30188

@@ -47,11 +47,6 @@ def mvc(x): return sp.to_device(x, sp.cpu_device)
 # Folder
 folder = "data/gasex-3d/"
 
-# np.save("ksp_g.npy", data_gas.reshape(1, *data_gas_reordered.shape))
-# np.save("ksp_d.npy", data_dissolved.reshape(1, *data_gas_reordered.shape))
-# np.save("coord_g.npy", coords)
-# np.save("coord_d.npy", coords)
-
 # Density compensation
 use_dcf = False
 analytical = False  # A useful preconditioner for 3D radials at full resolution
@@ -71,16 +66,10 @@ subset_type = "first n"  # Useful for only using first high signal projections
 subset_type = "every other n"  # Useful for preserving spread of magnetization decay
 
 # DCF settings
-if "floret-kumc" in folder:
-    beta = 8  # Default = 8
-    width = 4  # Default = 4, choose ~3 for high SNR, choose 5~8 for sharpness
-    crd_osamp = 1.75  # Rec: 2
-    img_osamp = 2  # Rec: 1.25, Make higher than crd_osamp for sharpness/lower for signal
-else:
-    beta = 8  # Default = 8
-    width = 4  # Default = 4, choose ~3 for high SNR, choose 5~8 for sharpness
-    crd_osamp = 5  # Rec: 1-2, set to 5 for low res recon
-    img_osamp = 1  # Rec: 1.25, Make higher than crd_osamp for sharpness/lower for signal
+beta = 8  # Default = 8
+width = 4  # Default = 4, choose ~3 for high SNR, choose 5~8 for sharpness
+crd_osamp = 4  # Rec: 1-4, set to 4 for low res recon
+img_osamp = 1  # Rec: 1.25, Make higher than crd_osamp for sharpness/lower for signal
 
 # Proximal gradient descent settings
 if use_dcf:
@@ -111,7 +100,7 @@ if use_dcf:
 else:
     # More iterations required without left-preconditioning (i.e. DCF)
     # 64 matrix
-    num_iters = 100  # Set to very high if radial
+    num_iters = 100  # Set to very high if ill-conditioned (i.e. under-sampled 3D radial)
     lamda_1 = 5e-7
     lamda_2 = 3e-5
     lamda_l2 = 1e-5
@@ -121,19 +110,8 @@ else:
     eta = 5e-3  # 1e-2 default
     rho = 5e2  # 5e2 for CG # TODO: Experiment with PI recon vs CG
     ptol = 1e-5
-    num_normal = 20  # Set to larger value for ill-conditoned radial
+    num_normal = 20  # Set to larger value if ill-conditioned (i.e. under-sampled 3D radial)
 
-    # 128 matrix
-    # num_iters = 300
-    # lamda_1 = 2e-7
-    # lamda_2 = 5e-5
-    # lamda_l2 = 1e-5
-    # lamda_3 = 1e-4
-    # lamda_4 = 5e-5  # TODO: Find optimal
-    # eta = 1e-3  # 1e-2 default
-    # rho = 5e2
-    # ptol = 1e-2
-    # num_normal = 11
 
 # %% Import MRI k-space data/coordinates
 
@@ -208,7 +186,7 @@ ax.set_xticklabels([])
 ax.set_zticklabels([])
 plt.show()
 
-# %% Downsample k-space data if oversampled along readout (R59 does this)
+# %% Downsample k-space data if oversampled along readout (Philips R59 does this)
 
 
 def moving_average(data, window_size=4):
@@ -248,8 +226,7 @@ if N_samp == 232:
 
 # Image reconstruction sizes
 pad_width = 3
-scan_resolution = 64 + 2*pad_width  # + 16 + 16  # - 16
-# scan_resolution = 58 + 2*pad_width  # + 16 + 16  # - 16
+scan_resolution = 64 + 2*pad_width 
 recon_resolution = int(scan_resolution * 1)
 
 # Make manipulations to reconstructed volume
@@ -259,8 +236,6 @@ resize_factor = recon_resolution / scan_resolution
 image_size = int(resize_factor * scan_resolution / alpha)
 image_shape = (int(image_size), int(image_size), int(image_size))
 coords_resize = image_size * coords / resize_factor
-if folder == "data/floret-kumc/":
-    coords_resize *= 1.5
 
 # %% Subset the data to experiment with undersampling
 
