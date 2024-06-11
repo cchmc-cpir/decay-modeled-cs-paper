@@ -38,11 +38,11 @@ It is recommended to run all scripts using the `Run Current File in Interactive 
 
 Iterative reconstructions have many knobs that can be turned to speed up and improve image quality. There is a chance that the settings used in this code may not apply as efficiently to your own site's data. Therefore, I recommend changing the following settings:
 
-1. `lamda` -- the regularization parameter for each regularization function.
-2. `num normal` -- the number of $A^H A$ operations (i.e. the number of iterations to solve the inner $||Ax-y||^2$ loop).
-3. `num_iters` -- number of outer iterations in ADMM algorithm.
+1. `lamda` --> the regularization parameter for each regularization function.
+2. `num_normal` --> the number of $A^H A$ operations (i.e. the number of iterations to solve the inner $||Ax-y||^2_2$ loop).
+3. `num_iters` --> number of outer iterations in ADMM algorithm.
 4. `rho` -- ADMM step size (sometimes, this can be increased to speed up convergence, although this directly multiplies `lamda`)
-5. `scan_resolution`/`recon_resolution` -- tune for your own application. `resolution` = matrix size (Philips terminology--please don't hate!)
+5. `scan_resolution`/`recon_resolution` --> tune for your own application. `resolution` = matrix size (Philips terminology--please don't hate!)
 
 If you want to talk about the algorithms, ADMM, other optimization theory, or simply want help with getting the code running for your application, please post on the Issues tab.
 
