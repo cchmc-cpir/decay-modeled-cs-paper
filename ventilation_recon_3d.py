@@ -37,7 +37,7 @@ plt.style.use('dark_background')
 # %% Reconstruction settings
 
 # Device settings
-devnum = 0  # -1 for CPU, 0 for GPU
+devnum = -1  # -1 for CPU, 0 for GPU
 device = sp.Device(devnum)
 xp = device.xp
 def mvd(x): return sp.to_device(x, device)

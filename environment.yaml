@@ -13,7 +13,7 @@ dependencies:
 - tqdm
 - numba
 - pywavelets
-- cupy # Comment for no GPU
-- nccl # Comment for no GPU
-- cudnn # Comment for no GPU
+# - cupy # Comment for no GPU
+# - nccl # Comment for no GPU
+# - cudnn # Comment for no GPU
 - sympy
